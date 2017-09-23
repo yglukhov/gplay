@@ -2,6 +2,11 @@
 Google Play APK Uploader, written in [Nim](https://nim-lang.org)
 
 ## Usage
+Install:
+```sh
+nimble install gplay
+```
+
 Uploading:
 ```sh
 gplay upload --email=<GPLAY_EMAIL> --key=<PATH_TO_GPLAY_PRIVATE_KEY> <APP_ID> <TRACK_NAME> <PATH_TO_APK>
