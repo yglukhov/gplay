@@ -12,4 +12,3 @@ bin = @["gplay"]
 requires "nim >= 0.17.0"
 requires "jwt"
 requires "cligen"
-requires "zip"
