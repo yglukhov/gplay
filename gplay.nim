@@ -32,12 +32,12 @@ template urlWithoutEndpoint[T: RestObjBase](r: T): string =
     else:
         r.parent.urlWithoutEndpoint & "/" & r.url
 
-proc request(cl: HttpClient, meth, url: string, body: string, contentType: string = nil): JsonNode =
+proc request(cl: HttpClient, meth, url: string, body: string, contentType: string = ""): JsonNode =
     cl.headers["Content-Length"] = $body.len
-    if body.isNil:
+    if body.len == 0:
         cl.headers.del("Content-Type")
     else:
-        if not contentType.isNil:
+        if contentType.len != 0:
             cl.headers["Content-Type"] = contentType
         else:
             cl.headers["Content-Type"] = "application/octet-stream"
@@ -50,30 +50,29 @@ proc request(cl: HttpClient, meth, url: string, body: string, contentType: strin
 
     if resp.code.is4xx or resp.code.is5xx:
         var msg = resp.status
-        if not resp.body.isNil:
+        if resp.body.len != 0:
             msg &= ":\l" & resp.body
         raise newException(HttpRequestError, msg)
 
-proc request(cl: HttpClient, meth, url: string, body: JsonNode, contentType: string = nil): JsonNode =
+proc request(cl: HttpClient, meth, url: string, body: JsonNode, contentType: string = ""): JsonNode =
     var ct = contentType
-    if ct.isNil:
+    if ct.len == 0:
         ct = "application/json"
     request(cl, meth, url, $body, ct)
 
-proc request[R: RestObjBase, T](res: R, meth, url: string, body: T, contentType: string = nil): JsonNode =
+proc request[R: RestObjBase, T](res: R, meth, url: string, body: T, contentType: string = ""): JsonNode =
     res.client.request(meth, res.fullUrl & "/" & url, body, contentType)
 
 proc postAux[T](cl: HttpClient | RestObjBase, url: string, body: T, contentType: string): JsonNode =
     cl.request("POST", url, body, contentType)
 
-proc post[T](cl: HttpClient | RestObjBase, url: string, body: T, contentType: string = nil): JsonNode =
+proc post[T](cl: HttpClient | RestObjBase, url: string, body: T, contentType: string = ""): JsonNode =
     postAux(cl, url, body, contentType)
 
 proc post(cl: HttpClient | RestObjBase, url: string): JsonNode =
-    let body: string = nil
-    postAux(cl, url, body, nil)
+    postAux(cl, url, "", "")
 
-proc put[T](cl: HttpClient | RestObjBase, url: string, body: T = nil, contentType: string = nil): JsonNode =
+proc put[T](cl: HttpClient | RestObjBase, url: string, body: T = nil, contentType: string = ""): JsonNode =
     cl.request("PUT", url, body, contentType)
 
 
