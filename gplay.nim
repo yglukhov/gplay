@@ -89,7 +89,7 @@ type
 proc newGooglePlayPublisherAPI*(email, privkey: string): GooglePlayPublisherAPI =
     result.new()
 
-    result.url = "https://www.googleapis.com/androidpublisher/v2"
+    result.url = "https://www.googleapis.com/androidpublisher/v3"
     let authUrl = "https://www.googleapis.com/oauth2/v4/token"
 
     var tok = JWT(
@@ -120,7 +120,7 @@ proc newEdit*(r: Application): Edit =
 proc commit*(r: Edit) = discard r.client.post(r.fullUrl & ":commit")
 
 proc uploadApk*(e: Edit, path: string): JsonNode =
-    let url = "https://www.googleapis.com/upload/androidpublisher/v2/" & e.urlWithoutEndpoint & "/apks?uploadType=media"
+    let url = "https://www.googleapis.com/upload/androidpublisher/v3/" & e.urlWithoutEndpoint & "/apks?uploadType=media"
     let content = readFile(path)
     e.client.post(url, content, "application/vnd.android.package-archive")
 
