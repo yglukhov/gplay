@@ -72,9 +72,11 @@ proc post[T](cl: HttpClient | RestObjBase, url: string, body: T, contentType: st
 proc post(cl: HttpClient | RestObjBase, url: string): JsonNode =
     postAux(cl, url, "", "")
 
-proc put[T](cl: HttpClient | RestObjBase, url: string, body: T = nil, contentType: string = ""): JsonNode =
+proc put[T](cl: HttpClient | RestObjBase, url: string, body: T = "", contentType: string = ""): JsonNode =
     cl.request("PUT", url, body, contentType)
 
+proc get[T](cl: HttpClient | RestObjBase, url: string, body: T = "", contentType: string = ""): JsonNode =
+    cl.request("GET", url, body, contentType)
 
 ################################################################################
 # Google play publisher API
@@ -125,7 +127,7 @@ proc uploadApk*(e: Edit, path: string): JsonNode =
     e.client.post(url, content, "application/vnd.android.package-archive")
 
 proc track*(e: Edit, name: string): Track = Track(parent: e, url: "tracks/" & name)
-proc update*(t: Track, versionCode: int) = discard t.client.put(t.fullUrl, %*{"versionCodes": [versionCode]})
+proc update*(t: Track, versionCode: int) = discard t.client.put(t.fullUrl, %*{"releases": [{"status": "completed", "versionCodes": [versionCode]}]})
 
 ################################################################################
 # Uploader
