@@ -163,16 +163,20 @@ when isMainModule:
 
         if fail: return 1
 
-        let keyContent = readFile(key)
-        let api = newGooglePlayPublisherAPI(email, keyContent)
-        let app = api.application(apkId)
-        let edit = app.newEdit()
-        echo "Uploading apk: ", apk
-        let appVersion = edit.uploadApk(apk)["versionCode"].num.int
-        let tr = edit.track(track)
-        echo "Setting track ", track, " to version ", appVersion
-        tr.update(appVersion)
-        echo "Committing"
-        edit.commit()
+        try:
+            let keyContent = readFile(key)
+            let api = newGooglePlayPublisherAPI(email, keyContent)
+            let app = api.application(apkId)
+            let edit = app.newEdit()
+            echo "Uploading apk: ", apk
+            let appVersion = edit.uploadApk(apk)["versionCode"].num.int
+            let tr = edit.track(track)
+            echo "Setting track ", track, " to version ", appVersion
+            tr.update(appVersion)
+            echo "Committing"
+            edit.commit()
+        except Exception as e:
+            echo "Error: ", e.msg
+            return 1
 
     dispatchMulti([upload])
