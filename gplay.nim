@@ -180,7 +180,7 @@ when isMainModule:
         echo "Uploading apk: ", apk
         var appVersion = 0
         if aab.len > 0:
-            appVersion = edit.uploadAab(apk)["versionCode"].num.int
+            appVersion = edit.uploadAab(aab)["versionCode"].num.int
         else:
             appVersion = edit.uploadApk(apk)["versionCode"].num.int
         let tr = edit.track(track)
