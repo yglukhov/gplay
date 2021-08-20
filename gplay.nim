@@ -129,7 +129,7 @@ proc uploadApk*(e: Edit, path: string): JsonNode =
 proc uploadAab*(e: Edit, path: string): JsonNode =
     let url = "https://www.googleapis.com/upload/androidpublisher/v3/" & e.urlWithoutEndpoint & "/bundles?uploadType=media"
     let content = readFile(path)
-    e.client.post(url, content)
+    e.client.post(url, content, "application/x-authorware-bin")
 
 
 proc track*(e: Edit, name: string): Track = Track(parent: e, url: "tracks/" & name)
