@@ -1,4 +1,4 @@
-import json, times, httpclient, cgi
+import json, times, httpclient, cgi, os
 import jwt
 
 ################################################################################
@@ -126,7 +126,7 @@ proc uploadApk*(e: Edit, path: string): JsonNode =
     let content = readFile(path)
     e.client.post(url, content, "application/vnd.android.package-archive")
 
-proc upaloadAab*(e: Edit, path: string): JsonNode =
+proc uploadAab*(e: Edit, path: string): JsonNode =
     let url = "https://www.googleapis.com/upload/androidpublisher/v3/" & e.urlWithoutEndpoint & "/bundles?uploadType=media"
     let content = readFile(path)
     e.client.post(url, content, "application/vnd.android.package-archive")
@@ -176,9 +176,9 @@ when isMainModule:
         echo "Uploading apk: ", apk
         var appVersion = 0
         if useAAB:
-            appVersion = edit.uploadApk(apk)["versionCode"].num.int
+            appVersion = edit.uploadAab(apk)["versionCode"].num.int
         else:
-            appVersion = edit.upaloadAab(apk)["versionCode"].num.int
+            appVersion = edit.uploadApk(apk)["versionCode"].num.int
         let tr = edit.track(track)
         echo "Setting track ", track, " to version ", appVersion
         tr.update(appVersion)
@@ -186,3 +186,4 @@ when isMainModule:
         edit.commit()
 
     dispatchMulti([upload])
+# gplay upload --apkId=com.oftengames.game2 --track=alpha --apk==build\outputs\bundle\release\com.oftengames.game2-release.aab --useAAB=true
