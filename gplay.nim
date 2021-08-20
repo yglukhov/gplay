@@ -126,6 +126,12 @@ proc uploadApk*(e: Edit, path: string): JsonNode =
     let content = readFile(path)
     e.client.post(url, content, "application/vnd.android.package-archive")
 
+proc uploadAab*(e: Edit, path: string): JsonNode =
+    let url = "https://www.googleapis.com/upload/androidpublisher/v3/" & e.urlWithoutEndpoint & "/bundles?uploadType=media"
+    let content = readFile(path)
+    e.client.post(url, content, "application/octet-stream")
+
+
 proc track*(e: Edit, name: string): Track = Track(parent: e, url: "tracks/" & name)
 proc update*(t: Track, versionCode: int) = discard t.client.put(t.fullUrl, %*{"releases": [{"status": "completed", "versionCodes": [versionCode]}]})
 
@@ -135,7 +141,7 @@ when isMainModule:
     import os
     import cligen
 
-    proc upload(email: string = "", key: string = "", apkId, track, apk: string): int =
+    proc upload(email: string = "", key: string = "", packageId, track: string, apk: string = "", aab: string = ""): int =
         var email = email
         var key = key
         if email.len == 0: email = getEnv("GPLAY_EMAIL")
@@ -153,22 +159,31 @@ when isMainModule:
             echo "Error: no track provided"
             fail = true
 
-        if apk.len == 0:
-            echo "Error: no apk provided"
+        if apk.len == 0 and aab.len == 0:
+            echo "Error: no apk/aab provided"
             fail = true
 
-        if apkId.len == 0:
-            echo "Error: no apk id provided"
+        if apk.len != 0 and aab.len != 0:
+            echo "Error: Both apk and aab provided. Choose apk or aab to upload"
+            fail = true
+
+        if packageId.len == 0:
+            echo "Error: no package id provided"
             fail = true
 
         if fail: return 1
 
         let keyContent = readFile(key)
         let api = newGooglePlayPublisherAPI(email, keyContent)
-        let app = api.application(apkId)
+        let app = api.application(packageId)
         let edit = app.newEdit()
-        echo "Uploading apk: ", apk
-        let appVersion = edit.uploadApk(apk)["versionCode"].num.int
+        var appVersion = 0
+        if aab.len > 0:
+            echo "Uploading aab: ", aab
+            appVersion = edit.uploadAab(aab)["versionCode"].num.int
+        else:
+            echo "Uploading apk: ", apk
+            appVersion = edit.uploadApk(apk)["versionCode"].num.int
         let tr = edit.track(track)
         echo "Setting track ", track, " to version ", appVersion
         tr.update(appVersion)
