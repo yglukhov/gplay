@@ -177,11 +177,12 @@ when isMainModule:
         let api = newGooglePlayPublisherAPI(email, keyContent)
         let app = api.application(packageId)
         let edit = app.newEdit()
-        echo "Uploading apk: ", apk
         var appVersion = 0
         if aab.len > 0:
+            echo "Uploading aab: ", aab
             appVersion = edit.uploadAab(aab)["versionCode"].num.int
         else:
+            echo "Uploading apk: ", apk
             appVersion = edit.uploadApk(apk)["versionCode"].num.int
         let tr = edit.track(track)
         echo "Setting track ", track, " to version ", appVersion
