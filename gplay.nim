@@ -141,7 +141,7 @@ when isMainModule:
     import os
     import cligen
 
-    proc upload(email: string = "", key: string = "", bundleId, track: string, apk: string = "", aab: string = ""): int =
+    proc upload(email: string = "", key: string = "", packageId, track: string, apk: string = "", aab: string = ""): int =
         var email = email
         var key = key
         if email.len == 0: email = getEnv("GPLAY_EMAIL")
@@ -167,15 +167,15 @@ when isMainModule:
             echo "Error: Both apk and aab provided. Choose apk or aab to upload"
             fail = true
 
-        if bundleId.len == 0:
-            echo "Error: no bundle id provided"
+        if packageId.len == 0:
+            echo "Error: no package id provided"
             fail = true
 
         if fail: return 1
 
         let keyContent = readFile(key)
         let api = newGooglePlayPublisherAPI(email, keyContent)
-        let app = api.application(bundleId)
+        let app = api.application(packageId)
         let edit = app.newEdit()
         echo "Uploading apk: ", apk
         var appVersion = 0
