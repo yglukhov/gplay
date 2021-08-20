@@ -141,7 +141,7 @@ when isMainModule:
     import os
     import cligen
 
-    proc upload(email: string = "", key: string = "", apkId, track, apk: string, useAAB: bool = false): int =
+    proc upload(email: string = "", key: string = "", bundleId, track: string, apk: string = "", aab: string = ""): int =
         var email = email
         var key = key
         if email.len == 0: email = getEnv("GPLAY_EMAIL")
@@ -159,23 +159,27 @@ when isMainModule:
             echo "Error: no track provided"
             fail = true
 
-        if apk.len == 0:
-            echo "Error: no apk provided"
+        if apk.len == 0 and aab.len == 0:
+            echo "Error: no apk/aab provided"
             fail = true
 
-        if apkId.len == 0:
-            echo "Error: no apk id provided"
+        if apk.len != 0 and aab.len != 0:
+            echo "Error: Both apk and aab provided. Choose apk or aab to upload"
+            fail = true
+
+        if bundleId.len == 0:
+            echo "Error: no bundle id provided"
             fail = true
 
         if fail: return 1
 
         let keyContent = readFile(key)
         let api = newGooglePlayPublisherAPI(email, keyContent)
-        let app = api.application(apkId)
+        let app = api.application(bundleId)
         let edit = app.newEdit()
         echo "Uploading apk: ", apk
         var appVersion = 0
-        if useAAB:
+        if aab.len > 0:
             appVersion = edit.uploadAab(apk)["versionCode"].num.int
         else:
             appVersion = edit.uploadApk(apk)["versionCode"].num.int
@@ -186,4 +190,3 @@ when isMainModule:
         edit.commit()
 
     dispatchMulti([upload])
-# gplay upload --apkId=com.oftengames.game2 --track=alpha --apk==build\outputs\bundle\release\com.oftengames.game2-release.aab --useAAB=true
