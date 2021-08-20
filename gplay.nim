@@ -126,6 +126,12 @@ proc uploadApk*(e: Edit, path: string): JsonNode =
     let content = readFile(path)
     e.client.post(url, content, "application/vnd.android.package-archive")
 
+proc upaloadAab*(e: Edit, path: string): JsonNode =
+    let url = "https://www.googleapis.com/upload/androidpublisher/v3/" & e.urlWithoutEndpoint & "/bundles?uploadType=media"
+    let content = readFile(path)
+    e.client.post(url, content, "application/vnd.android.package-archive")
+
+
 proc track*(e: Edit, name: string): Track = Track(parent: e, url: "tracks/" & name)
 proc update*(t: Track, versionCode: int) = discard t.client.put(t.fullUrl, %*{"releases": [{"status": "completed", "versionCodes": [versionCode]}]})
 
@@ -135,7 +141,7 @@ when isMainModule:
     import os
     import cligen
 
-    proc upload(email: string = "", key: string = "", apkId, track, apk: string): int =
+    proc upload(email: string = "", key: string = "", apkId, track, apk: string, useAAB: bool = false): int =
         var email = email
         var key = key
         if email.len == 0: email = getEnv("GPLAY_EMAIL")
@@ -168,7 +174,11 @@ when isMainModule:
         let app = api.application(apkId)
         let edit = app.newEdit()
         echo "Uploading apk: ", apk
-        let appVersion = edit.uploadApk(apk)["versionCode"].num.int
+        var appVersion = 0
+        if useAAB:
+            appVersion = edit.uploadApk(apk)["versionCode"].num.int
+        else:
+            appVersion = edit.upaloadAab(apk)["versionCode"].num.int
         let tr = edit.track(track)
         echo "Setting track ", track, " to version ", appVersion
         tr.update(appVersion)
