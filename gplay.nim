@@ -95,7 +95,7 @@ proc newGooglePlayPublisherAPI*(email, privkey: string): GooglePlayPublisherAPI 
     let authUrl = "https://www.googleapis.com/oauth2/v4/token"
 
     var tok = JWT(
-        header: JOSEHeader(alg: RS256, typ: "JWT"),
+        header: %*{"alg": RS256, "typ": "JWT"},
         claims: toClaims(%*{
         "iss": email,
         "scope": "https://www.googleapis.com/auth/androidpublisher",
@@ -131,6 +131,13 @@ proc uploadAab*(e: Edit, path: string): JsonNode =
     let content = readFile(path)
     e.client.post(url, content, "application/octet-stream")
 
+proc reviewList*(app: Application): JsonNode =
+    let url = "https://www.googleapis.com/androidpublisher/v3/" & app.urlWithoutEndpoint & "/reviews"
+    app.client.get(url)
+
+proc inapList*(app: Application): JsonNode =
+    let url = "https://www.googleapis.com/androidpublisher/v3/" & app.urlWithoutEndpoint & "/inappproducts"
+    app.client.get(url)
 
 proc track*(e: Edit, name: string): Track = Track(parent: e, url: "tracks/" & name)
 proc update*(t: Track, versionCode: int) = discard t.client.put(t.fullUrl, %*{"releases": [{"status": "completed", "versionCodes": [versionCode]}]})
@@ -141,18 +148,40 @@ when isMainModule:
     import os
     import cligen
 
-    proc upload(email: string = "", key: string = "", packageId, track: string, apk: string = "", aab: string = ""): int =
+    proc reviews(jsonFile: string = "", packageId: string): int =
+        var jdata = parseFile(jsonFile)
+        var email = jdata["client_email"].to(string)
+        var keyContent = jdata["private_key"].to(string)
+        let api = newGooglePlayPublisherAPI(email, keyContent)
+        let app = api.application(packageId)
+        echo app.reviewList()
+
+    proc innaps(jsonFile: string = "", packageId: string): int =
+        var jdata = parseFile(jsonFile)
+        var email = jdata["client_email"].to(string)
+        var keyContent = jdata["private_key"].to(string)
+        let api = newGooglePlayPublisherAPI(email, keyContent)
+        let app = api.application(packageId)
+        echo app.inapList()
+
+    proc upload(email: string = "", key: string = "", jsonFile: string = "", packageId, track: string, apk: string = "", aab: string = ""): int =
         var email = email
         var key = key
+        var jsonCreds: JsonNode
         if email.len == 0: email = getEnv("GPLAY_EMAIL")
         if key.len == 0: key = getEnv("GPLAY_KEY")
+        if jsonFile.len > 0:
+            jsonCreds = parseFile(jsonFile)
+        elif existsEnv("GPLAY_JSONCREDS_DATA"):
+            jsonCreds = parseJson(getEnv("GPLAY_JSONCREDS_DATA"))
+
         var fail = false
-        if email.len == 0:
-            echo "Error: no email provided. Use --email argument or GPLAY_EMAIL environment variable"
+        if email.len == 0 and jsonFile.len == 0:
+            echo "Error: no email provided. Use --email argument or GPLAY_EMAIL environment variable. Or provide Service account credentials in json."
             fail = true
 
-        if key.len == 0:
-            echo "Error: no private key path provided. Use --key argument or GPLAY_KEY environment variable"
+        if key.len == 0 and jsonFile.len == 0:
+            echo "Error: no private key path provided. Use --key argument or GPLAY_KEY environment variable. Or provide Service account credentials in json."
             fail = true
 
         if track.len == 0:
@@ -173,7 +202,13 @@ when isMainModule:
 
         if fail: return 1
 
-        let keyContent = readFile(key)
+        var keyContent: string
+        if jsonFile.len > 0:
+            email = jsonCreds["client_email"].to(string)
+            keyContent = jsonCreds["private_key"].to(string)
+        else:
+            keyContent = readFile(key)
+
         let api = newGooglePlayPublisherAPI(email, keyContent)
         let app = api.application(packageId)
         let edit = app.newEdit()
@@ -190,4 +225,4 @@ when isMainModule:
         echo "Committing"
         edit.commit()
 
-    dispatchMulti([upload])
+    dispatchMulti([reviews], [innaps], [upload])
