@@ -176,13 +176,14 @@ when isMainModule:
             jsonCreds = parseJson(getEnv("GPLAY_JSONCREDS_DATA"))
 
         var fail = false
-        if email.len == 0 and jsonCreds == nil:
-            echo "Error: no email provided. Use --email argument or GPLAY_EMAIL environment variable. Or provide Service account credentials in json."
-            fail = true
+        if jsonCreds == nil:
+            if email.len == 0:
+                echo "Error: no email provided. Use --email argument or GPLAY_EMAIL environment variable. Or provide Service account credentials in json."
+                fail = true
 
-        if key.len == 0 and jsonCreds == nil:
-            echo "Error: no private key path provided. Use --key argument or GPLAY_KEY environment variable. Or provide Service account credentials in json."
-            fail = true
+            if key.len == 0:
+                echo "Error: no private key path provided. Use --key argument or GPLAY_KEY environment variable. Or provide Service account credentials in json."
+                fail = true
 
         if track.len == 0:
             echo "Error: no track provided"
@@ -203,7 +204,7 @@ when isMainModule:
         if fail: return 1
 
         var keyContent: string
-        if jsonFile.len > 0:
+        if jsonCreds != nil:
             email = jsonCreds["client_email"].to(string)
             keyContent = jsonCreds["private_key"].to(string)
         else:
