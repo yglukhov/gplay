@@ -176,11 +176,11 @@ when isMainModule:
             jsonCreds = parseJson(getEnv("GPLAY_JSONCREDS_DATA"))
 
         var fail = false
-        if email.len == 0 and jsonFile.len == 0:
+        if email.len == 0 and jsonCreds == nil:
             echo "Error: no email provided. Use --email argument or GPLAY_EMAIL environment variable. Or provide Service account credentials in json."
             fail = true
 
-        if key.len == 0 and jsonFile.len == 0:
+        if key.len == 0 and jsonCreds == nil:
             echo "Error: no private key path provided. Use --key argument or GPLAY_KEY environment variable. Or provide Service account credentials in json."
             fail = true
 
